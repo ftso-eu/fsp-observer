@@ -35,7 +35,7 @@ def check_submit_1(
     # this means that the messsage must exist and its payload should be 32 bytes.
     # we perform the following checks:
     # - submit1 doesn't exist -> error
-    # - submit1 exists but commit hash length isn't 32 -> warning
+    # - submit1 exists but commit hash length isn't 32 -> error
 
     if submit_1 is None:
         issues.append(mb.build(MessageLevel.ERROR, "no submit1 transaction"))
@@ -45,7 +45,7 @@ def check_submit_1(
         if hash_len != 32:
             issues.append(
                 mb.build(
-                    MessageLevel.WARNING,
+                    MessageLevel.ERROR,
                     f"submit1 commit hash unexpeted length ({hash_len}), expected 32",
                 )
             )
@@ -141,7 +141,7 @@ def check_submit_signatures(
     # chain (whichever is later)
     # we perform the following checks:
     # - submitSignatures doesn't exist -> error
-    # - submitSignature was sent after the deadline -> error
+    # - submitSignature was sent after the deadline -> warning
     # - signature doesn't match finalization -> error
 
     if submit_signatures is None:
@@ -158,7 +158,7 @@ def check_submit_signatures(
         if submit_signatures.wtx_data.timestamp > deadline:
             issues.append(
                 mb.build(
-                    MessageLevel.ERROR,
+                    MessageLevel.WARNING,
                     "no submitSignatures during grace period, causing loss of rewards",
                 )
             )

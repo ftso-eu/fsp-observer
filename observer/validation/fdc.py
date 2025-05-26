@@ -130,7 +130,7 @@ def check_submit_signatures(
     # - submit2 doesn't exist and submitSignatures doesn't exist -> error
     # - submit2 exists and submitSignatures doesn't exist and submit2 bit vote
     #   dominates consensus bit vote -> reveal offence
-    # - submitSignature was sent after the deadline -> error
+    # - submitSignature was sent after the deadline -> warning
     # - signature doesn't match finalization -> error
 
     if submit_2 is None and submit_signatures is None:
@@ -178,7 +178,7 @@ def check_submit_signatures(
         if submit_signatures.wtx_data.timestamp > deadline:
             issues.append(
                 mb.build(
-                    MessageLevel.ERROR,
+                    MessageLevel.WARNING,
                     "no submitSignatures during grace period, causing loss of rewards",
                 )
             )
