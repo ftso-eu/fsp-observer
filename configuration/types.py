@@ -184,31 +184,36 @@ class Epoch:
 
 @frozen
 class NotificationDiscord:
-    webhook_url: str
+    webhook_url: list[str]
 
 
 @frozen
 class NotificationSlack:
-    webhook_url: str
+    webhook_url: list[str]
 
 
 @frozen
-class NotificationTelegram:
+class TelegramBot:
     bot_token: str
     chat_id: str
 
 
 @frozen
+class NotificationTelegram:
+    bot: list[TelegramBot]
+
+
+@frozen
 class NotificationGeneric:
-    webhook_url: str
+    webhook_url: list[str]
 
 
 @frozen
 class Notification:
-    discord: NotificationDiscord | None
-    slack: NotificationSlack | None
-    telegram: NotificationTelegram | None
-    generic: NotificationGeneric | None
+    discord: NotificationDiscord
+    slack: NotificationSlack
+    telegram: NotificationTelegram
+    generic: NotificationGeneric
 
 
 @frozen

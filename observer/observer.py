@@ -182,17 +182,12 @@ def log_message(config: Configuration, message: Message):
 
     n = config.notification
 
-    if n.discord is not None:
-        notify_discord(n.discord, message.level.name + " " + message.message)
+    lvl_msg = f"{message.level.name} {message.message}"
 
-    if n.slack is not None:
-        notify_slack(n.slack, message.level.name + " " + message.message)
-
-    if n.telegram is not None:
-        notify_telegram(n.telegram, message.level.name + " " + message.message)
-
-    if n.generic is not None:
-        notify_generic(n.generic, message)
+    notify_discord(n.discord, lvl_msg)
+    notify_slack(n.slack, lvl_msg)
+    notify_telegram(n.telegram, lvl_msg)
+    notify_generic(n.generic, message)
 
 
 async def observer_loop(config: Configuration) -> None:

@@ -13,6 +13,7 @@ from .types import (
     NotificationGeneric,
     NotificationSlack,
     NotificationTelegram,
+    TelegramBot,
 )
 
 
@@ -67,35 +68,34 @@ def get_epoch(chain_id: int) -> Epoch:
 
 
 def get_notification_config() -> Notification:
-    discord = None
     discord_webhook = os.environ.get("NOTIFICATION_DISCORD_WEBHOOK")
+    discord = []
     if discord_webhook is not None:
-        discord = NotificationDiscord(discord_webhook)
+        discord.extend(discord_webhook.split(","))
 
-    slack = None
     slack_webhook = os.environ.get("NOTIFICATION_SLACK_WEBHOOK")
+    slack = []
     if slack_webhook is not None:
-        slack = NotificationSlack(slack_webhook)
+        slack.extend(slack_webhook.split(","))
 
-    telegram = None
     telegram_bot_token = os.environ.get("NOTIFICATION_TELEGRAM_BOT_TOKEN")
     telegram_chat_id = os.environ.get("NOTIFICATION_TELEGRAM_CHAT_ID")
+    telegram = []
     if telegram_bot_token is not None and telegram_chat_id is not None:
-        telegram = NotificationTelegram(
-            bot_token=telegram_bot_token,
-            chat_id=telegram_chat_id,
-        )
+        bot_tokens = telegram_bot_token.split(",")
+        chat_ids = telegram_chat_id.split(",")
+        telegram = [TelegramBot(t, c) for t, c in zip(bot_tokens, chat_ids)]
 
-    generic = None
     generic_webhook = os.environ.get("NOTIFICATION_GENERIC_WEBHOOK")
+    generic = []
     if generic_webhook is not None:
-        generic = NotificationGeneric(generic_webhook)
+        generic.extend(generic_webhook.split(","))
 
     return Notification(
-        discord=discord,
-        slack=slack,
-        telegram=telegram,
-        generic=generic,
+        discord=NotificationDiscord(discord),
+        slack=NotificationSlack(slack),
+        telegram=NotificationTelegram(telegram),
+        generic=NotificationGeneric(generic),
     )
 
 

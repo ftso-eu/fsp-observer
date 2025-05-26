@@ -26,43 +26,41 @@ def notify(
         pass
 
 
-def notify_discord(
-    config: NotificationDiscord, message: str
-) -> requests.Response | None:
-    return notify(
-        config.webhook_url,
-        "POST",
-        headers={"Content-Type": "application/json"},
-        json={"content": message},
-    )
+def notify_discord(config: NotificationDiscord, message: str) -> None:
+    for u in config.webhook_url:
+        notify(
+            u,
+            "POST",
+            headers={"Content-Type": "application/json"},
+            json={"content": message},
+        )
 
 
-def notify_slack(config: NotificationSlack, message: str) -> requests.Response | None:
-    return notify(
-        config.webhook_url,
-        "POST",
-        headers={"Content-Type": "application/json"},
-        json={"text": message},
-    )
+def notify_slack(config: NotificationSlack, message: str) -> None:
+    for u in config.webhook_url:
+        notify(
+            u,
+            "POST",
+            headers={"Content-Type": "application/json"},
+            json={"text": message},
+        )
 
 
-def notify_telegram(
-    config: NotificationTelegram, message: str
-) -> requests.Response | None:
-    return notify(
-        f"https://api.telegram.org/bot{config.bot_token}/sendMessage",
-        "POST",
-        headers={"Content-Type": "application/json"},
-        json={"chat_id": config.chat_id, "text": message},
-    )
+def notify_telegram(config: NotificationTelegram, message: str) -> None:
+    for t in config.bot:
+        notify(
+            f"https://api.telegram.org/bot{t.bot_token}/sendMessage",
+            "POST",
+            headers={"Content-Type": "application/json"},
+            json={"chat_id": t.chat_id, "text": message},
+        )
 
 
-def notify_generic(
-    config: NotificationGeneric, issue: "Message"
-) -> requests.Response | None:
-    return notify(
-        config.webhook_url,
-        "POST",
-        headers={"Content-Type": "application/json"},
-        json={"level": issue.level.value, "message": issue.message},
-    )
+def notify_generic(config: NotificationGeneric, issue: "Message") -> None:
+    for u in config.webhook_url:
+        notify(
+            u,
+            "POST",
+            headers={"Content-Type": "application/json"},
+            json={"level": issue.level.value, "message": issue.message},
+        )
