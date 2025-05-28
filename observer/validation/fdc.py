@@ -195,7 +195,7 @@ def check_submit_signatures(
             issues.append(
                 mb.build(
                     MessageLevel.ERROR,
-                    "submit signatures signature doesn't match finalization",
+                    "submitSignatures signature doesn't match finalization",
                 ),
             )
 

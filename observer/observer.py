@@ -456,7 +456,7 @@ async def observer_loop(config: Configuration) -> None:
             rounds = vrm.finalize(block_data)
             for r in rounds:
                 entity = signing_policy.entity_mapper.by_identity_address[tia]
-                for message in validate_round(r, entity, config):
+                for message in validate_round(r, signing_policy, entity, config):
                     log_message(config, message)
 
         block_number = latest_block

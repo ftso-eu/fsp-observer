@@ -5,6 +5,8 @@ from attrs import define, field, frozen
 from eth_typing import ChecksumAddress
 from hexbytes import HexBytes
 from py_flare_common.fsp.epoch.epoch import VotingEpoch
+from py_flare_common.fsp.messaging.byte_parser import ByteParser
+from py_flare_common.fsp.messaging.parse import parse_generic_tx
 from py_flare_common.fsp.messaging.types import (
     FdcSubmit1,
     FdcSubmit2,
@@ -13,9 +15,11 @@ from py_flare_common.fsp.messaging.types import (
     ParsedPayload,
     SubmitSignatures,
 )
+from py_flare_common.ftso.commit import commit_hash
+from py_flare_common.ftso.median import FtsoMedian, FtsoVote, calculate_median
 from web3.types import BlockData, TxData
 
-from .reward_epoch_manager import Entity
+from .reward_epoch_manager import Entity, SigningPolicy
 from .types import AttestationRequest, ProtocolMessageRelayed
 
 
@@ -121,7 +125,73 @@ class VotingRoundProtocol[S1, S2, SS]:
 class FtsoVotingRoundProtocol(
     VotingRoundProtocol[FtsoSubmit1, FtsoSubmit2, SubmitSignatures]
 ):
-    pass
+    medians: list[FtsoMedian] = field(factory=list)
+
+    def calculate_medians(self, epoch: VotingEpoch, signing_policy: SigningPolicy):
+        next = epoch.next
+        rd = next.reveal_deadline()
+
+        # TODO:(matej) hacky way to determine nr of feeds, should read from
+        # events when available
+        # type: nr_of_feeds: times_found
+        number_of_feeds: dict[int, int] = defaultdict(int)
+
+        votes_to_consider: list[
+            tuple[Entity, WParsedPayload[FtsoSubmit1], WParsedPayload[FtsoSubmit2]]
+        ] = []
+
+        for entity in signing_policy.entities:
+            _submit_1 = self.submit_1.by_identity[entity.identity_address]
+            submit_1 = _submit_1.extract_latest(range(epoch.start_s, epoch.end_s))
+
+            _submit_2 = self.submit_2.by_identity[entity.identity_address]
+            submit_2 = _submit_2.extract_latest(range(next.start_s, rd))
+
+            if submit_1 is None or submit_2 is None:
+                continue
+
+            bp = ByteParser(parse_generic_tx(submit_2.wtx_data.input).ftso.payload)
+            rnd = bp.uint256()
+            feed_v = bp.drain()
+
+            hashed = commit_hash(entity.submit_address, epoch.id, rnd, feed_v)
+
+            if hashed != submit_1.parsed_payload.payload.commit_hash.hex():
+                continue
+
+            number_of_feeds[len(submit_2.parsed_payload.payload.values)] += 1
+
+            votes_to_consider.append((entity, submit_1, submit_2))
+
+        nr_feed = max(number_of_feeds.items(), key=lambda x: x[1])[0]
+
+        for i in range(nr_feed):
+            ftso_votes = []
+
+            for e, _, s_2 in votes_to_consider:
+                values = s_2.parsed_payload.payload.values
+
+                if len(values) < i:
+                    continue
+
+                value = values[i]
+
+                if value is None:
+                    continue
+
+                ftso_votes.append(
+                    FtsoVote(
+                        value=value,
+                        weight=e.w_nat_capped_weight,
+                    )
+                )
+
+            ftso_votes.sort(key=lambda x: x.value)
+
+            median = calculate_median(ftso_votes)
+            assert median is not None
+
+            self.medians.append(median)
 
 
 @define

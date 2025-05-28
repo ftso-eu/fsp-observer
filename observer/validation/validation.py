@@ -13,7 +13,7 @@ from py_flare_common.fsp.messaging.types import (
 from configuration.types import Configuration
 
 from ..message import Message
-from ..reward_epoch_manager import Entity
+from ..reward_epoch_manager import Entity, SigningPolicy
 from ..voting_round import VotingRound, VotingRoundProtocol, WParsedPayload
 from . import fdc, ftso
 from .types import ValidateFn, ValidateFnKwargs
@@ -47,8 +47,14 @@ def extract_round_for_entity[S1, S2, S3](
 
 
 def validate_round(
-    round: VotingRound, entity: Entity, config: Configuration
+    round: VotingRound,
+    signing_policy: SigningPolicy,
+    entity: Entity,
+    config: Configuration,
 ) -> Sequence[Message]:
+    # TODO:(matej) move this somewhere else
+    round.ftso.calculate_medians(round.voting_epoch, signing_policy)
+
     issues = []
 
     mb_ftso = Message.builder().add(

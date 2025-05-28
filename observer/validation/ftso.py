@@ -74,9 +74,8 @@ def check_submit_2(
     # - submit1 exists and submit2 doesn't -> reveal offence
     # - both exist but reveal hash doesn't match commit hash -> reveal offence
     # - ftso values have null values -> warning
-    # TODO:(matej)
     # - ftso value have values that aren't in range of minimal conditions -> warning
-    # - ftso values have inocrrect length -> warning
+    # - ftso values have incorrect length -> warning
 
     if submit_1 is None and submit_2 is None:
         issues.append(mb.build(MessageLevel.ERROR, "no submit2 transaction"))
@@ -105,19 +104,53 @@ def check_submit_2(
             )
 
     if submit_2 is not None:
-        indices = [
-            str(i)
-            for i, v in enumerate(submit_2.parsed_payload.payload.values)
-            if v is None
-        ]
+        medians = round.ftso.medians
+        values = submit_2.parsed_payload.payload.values
 
-        if indices:
+        if len(values) != len(medians):
             issues.append(
                 mb.build(
                     MessageLevel.WARNING,
-                    f"submit 2 had 'None' on indices {', '.join(indices)}",
+                    (
+                        f"submit2 had values for {len(values)} feeds, "
+                        f"expected {len(medians)}"
+                    ),
                 )
             )
+
+        else:
+            none_indices = []
+            minimal_condition_indices = []
+
+            for i, (v, m) in enumerate(zip(values, medians)):
+                if v is None:
+                    none_indices.append(str(i))
+                    continue
+
+                # as per https://proposals.flare.network/FIP/FIP_10.html
+                mcb_low = m.value * 0.995
+                mcb_high = m.value * 1.005
+
+                if not (mcb_low <= v <= mcb_high):
+                    minimal_condition_indices.append(str(i))
+
+            if none_indices:
+                ind = ", ".join(none_indices)
+                issues.append(
+                    mb.build(
+                        MessageLevel.WARNING,
+                        f"submit2 had 'None' on indices {ind}",
+                    )
+                )
+
+            if minimal_condition_indices:
+                ind = ", ".join(minimal_condition_indices)
+                issues.append(
+                    mb.build(
+                        MessageLevel.WARNING,
+                        f"submit2 values missed minimal conditions on indices {ind}",
+                    )
+                )
 
     return issues
 
@@ -175,7 +208,7 @@ def check_submit_signatures(
             issues.append(
                 mb.build(
                     MessageLevel.ERROR,
-                    "submit signatures signature doesn't match finalization",
+                    "submitSignatures signature doesn't match finalization",
                 ),
             )
 

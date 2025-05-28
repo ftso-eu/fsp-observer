@@ -42,13 +42,13 @@ todos:
     - staking:
         - [ ] check node uptime
     - ftso:
-        - [ ] better ftso value analysis 
+        - [x] better ftso value analysis 
             - if you are meeting minimal conditions
             - weird value (not just None but also 0.1 all the time, or just wildly different to median)
             - parse events to be able to tell feeds by names not by indices
         - [x] check submit signatures signature against finalization 
     - fdc:
-        - [ ] sample minimal conditions
+        - [x] sample minimal conditions
         - [x] correct bitvote length (submit2 fdc)
         - [x] check submit signatures signature against finalization 
     - fast updates:
