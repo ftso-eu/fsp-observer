@@ -1,5 +1,6 @@
 import logging
 import time
+from collections.abc import Sequence
 from typing import Self
 
 from eth_account._utils.signing import to_standard_v
@@ -19,6 +20,7 @@ from configuration.types import (
     Configuration,
 )
 from observer.reward_epoch_manager import (
+    Entity,
     SigningPolicy,
 )
 from observer.types import (
@@ -190,6 +192,32 @@ def log_message(config: Configuration, message: Message):
     notify_generic(n.generic, message)
 
 
+async def cron(config: Configuration, w: AsyncWeb3, e: Entity) -> Sequence[Message]:
+    mb = Message.builder()
+    messages = []
+
+    addrs = (
+        ("submit", e.submit_address),
+        ("submit signatures", e.submit_signatures_address),
+        ("signing policy", e.signing_policy_address),
+    )
+
+    for name, addr in addrs:
+        balance = await w.eth.get_balance(addr, "latest")
+        if balance < config.fee_threshold * 1e18:
+            level = MessageLevel.WARNING
+            if balance <= 5e18:
+                level = MessageLevel.ERROR
+
+            messages.append(
+                mb.build(
+                    level, f"low balance for {name} address ({balance / 1e18:.4f} NAT)"
+                )
+            )
+
+    return messages
+
+
 async def observer_loop(config: Configuration) -> None:
     w = AsyncWeb3(
         AsyncWeb3.AsyncHTTPProvider(config.rpc_url),
@@ -269,6 +297,8 @@ async def observer_loop(config: Configuration) -> None:
     #     # f"(current: {voting_round.id})\n"
     #     # f"current reward epoch: {current_rid}",
     # )
+
+    cron_time = time.time()
 
     # wait until next voting epoch
     block_number = block["number"]
@@ -453,10 +483,17 @@ async def observer_loop(config: Configuration) -> None:
                             except Exception:
                                 pass
 
+            messages: list[Message] = []
+            entity = signing_policy.entity_mapper.by_identity_address[tia]
+
+            if int(time.time() - cron_time) < 60 * 60:
+                messages.extend(await cron(config, w, entity))
+
             rounds = vrm.finalize(block_data)
             for r in rounds:
-                entity = signing_policy.entity_mapper.by_identity_address[tia]
-                for message in validate_round(r, signing_policy, entity, config):
-                    log_message(config, message)
+                messages.extend(validate_round(r, signing_policy, entity, config))
+
+            for m in messages:
+                log_message(config, m)
 
         block_number = latest_block

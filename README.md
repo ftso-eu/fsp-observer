@@ -31,7 +31,7 @@ todos:
 
 - more checks:
     - general/fsp:
-        - [ ] check if addresses (submit, signature, sign) have enough tokens for gas
+        - [x] check if addresses (submit, signature, sign) have enough tokens for gas
             - [ ] collect fast updates addresses and check them too
         - [ ] check for unclaimed rewards
         - [ ] check for registration:

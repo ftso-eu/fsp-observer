@@ -117,6 +117,9 @@ def get_config() -> Configuration:
     if identity_address is None:
         raise ConfigError("IDENTITY_ADDRESS environment variable must be set.")
 
+    _fee_threshold = os.environ.get("FEE_THRESHOLD", "25")
+    fee_threshold = int(_fee_threshold)
+
     config = Configuration(
         rpc_url=rpc_url,
         identity_address=to_checksum_address(identity_address),
@@ -124,6 +127,7 @@ def get_config() -> Configuration:
         contracts=Contracts.get_contracts(w),
         epoch=get_epoch(chain_id),
         notification=get_notification_config(),
+        fee_threshold=fee_threshold,
     )
 
     return config

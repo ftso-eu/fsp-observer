@@ -224,3 +224,4 @@ class Configuration:
     rpc_url: str
     epoch: Epoch
     notification: Notification
+    fee_threshold: int
