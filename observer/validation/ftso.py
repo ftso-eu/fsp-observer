@@ -143,14 +143,15 @@ def check_submit_2(
                     )
                 )
 
-            if minimal_condition_indices:
-                ind = ", ".join(minimal_condition_indices)
-                issues.append(
-                    mb.build(
-                        MessageLevel.WARNING,
-                        f"submit2 values missed minimal conditions on indices {ind}",
-                    )
-                )
+            # TODO:(matej) change this to a sampling array instead
+            # if minimal_condition_indices:
+            #     ind = ", ".join(minimal_condition_indices)
+            #     issues.append(
+            #         mb.build(
+            #             MessageLevel.WARNING,
+            #             f"submit2 values missed minimal conditions on indices {ind}",
+            #         )
+            #     )
 
     return issues
 
