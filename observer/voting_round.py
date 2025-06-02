@@ -171,7 +171,7 @@ class FtsoVotingRoundProtocol(
             for e, _, s_2 in votes_to_consider:
                 values = s_2.parsed_payload.payload.values
 
-                if len(values) < i:
+                if i >= len(values):
                     continue
 
                 value = values[i]
