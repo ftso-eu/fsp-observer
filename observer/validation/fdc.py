@@ -174,14 +174,15 @@ def check_submit_signatures(
             round.voting_epoch.next.start_s + 55,
             (finalization and finalization.timestamp) or 0,
         )
-
-        if submit_signatures.wtx_data.timestamp > deadline:
-            issues.append(
-                mb.build(
-                    MessageLevel.WARNING,
-                    "no submitSignatures during grace period, causing loss of rewards",
-                )
-            )
+    
+#    NOT USEFUL WARNINGS
+#        if submit_signatures.wtx_data.timestamp > deadline:
+#            issues.append(
+#                mb.build(
+#                    MessageLevel.WARNING,
+#                    "no submitSignatures during grace period, causing loss of rewards",
+#                )
+#            )
 
     if submit_signatures is not None and finalization is not None:
         s = Signature.from_parsed_signature(
